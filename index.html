@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Бронювання поїздки</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+  label { display: block; margin-top: 15px; }
+  select, input { width: 100%; padding: 8px; margin-top: 5px; }
+  button { margin-top: 20px; padding: 10px; width: 100%; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+  button:disabled { background-color: #cccccc; }
+</style>
+</head>
+<body>
+  <h2>Бронювання поїздки</h2>
+
+  <label for="from">Звідки:</label>
+  <select id="from" required>
+    <option value="">Оберіть місто</option>
+    <option>Гайсин</option>
+    <option>Умань</option>
+    <option>Жашків</option>
+    <option>Біла Церква</option>
+  </select>
+
+  <label for="to">Куди:</label>
+  <select id="to" required>
+    <option value="">Оберіть місто</option>
+    <option>Гайсин</option>
+    <option>Умань</option>
+    <option>Жашків</option>
+    <option>Біла Церква</option>
+  </select>
+
+  <label for="date">Дата:</label>
+  <input type="date" id="date" required />
+
+  <label for="seats">Кількість місць (1-8):</label>
+  <input type="number" id="seats" min="1" max="8" required />
+
+  <label for="phone">Телефон:</label>
+  <input type="tel" id="phone" placeholder="+380XXXXXXXXX" pattern="^\+?\d{10,15}$" required />
+
+  <button id="submitBtn" disabled>Відправити</button>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  const submitBtn = document.getElementById("submitBtn");
+
+  // Функція для перевірки валідності форми
+  function validateForm() {
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    const date = document.getElementById("date").value;
+    const seats = document.getElementById("seats").value;
+    const phone = document.getElementById("phone").value;
+
+    // Перевіряємо всі поля
+    const isValid = from && to && from !== to && date && seats >= 1 && seats <= 8 && /^\+?\d{10,15}$/.test(phone);
+    submitBtn.disabled = !isValid;
+  }
+
+  document.querySelectorAll("select, input").forEach(el => {
+    el.addEventListener("input", validateForm);
+  });
+
+  submitBtn.addEventListener("click", async () => {
+    const data = {
+      from: document.getElementById("from").value,
+      to: document.getElementById("to").value,
+      date: document.getElementById("date").value,
+      seats: document.getElementById("seats").value,
+      phone: document.getElementById("phone").value,
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Відправка...";
+
+    try {
+      const response = await fetch("https://script.google.com/macros/s/AKfycby1syRxjVVF2RZl53BNK_J8JY6m41bSdruealVat-Vem8-aU-T6rAPOvrlonH_pIbsD/exec", {
+        method: "POST",
+        body: new URLSearchParams(data),
+      });
+      const text = await response.text();
+
+      if (response.ok) {
+        alert("✅ " + text);
+        tg.close();  // Закрити WebApp у Telegram
+      } else {
+        alert("❌ Помилка: " + text);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Відправити";
+      }
+    } catch (e) {
+      alert("❌ Помилка мережі");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Відправити";
+    }
+  });
+
+  validateForm();
+</script>
+</body>
+</html>
